@@ -19,7 +19,6 @@
             font-family: 'Quicksand', sans-serif;
         }
 
-        /* Encabezado */
         .header {
             position: absolute;
             top: 5%;
@@ -44,19 +43,17 @@
             text-transform: uppercase;
         }
 
-        /* Contador */
         #countdown-container {
             margin-top: 10px;
             color: #ffb3c1;
             font-weight: 500;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             background: rgba(255, 77, 109, 0.1);
             padding: 5px 15px;
             border-radius: 20px;
             display: inline-block;
         }
 
-        /* Contenedor de Botones */
         .button-container {
             position: absolute;
             bottom: 8%;
@@ -71,21 +68,30 @@
         .day-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 77, 109, 0.4);
-            color: white;
+            color: rgba(255, 255, 255, 0.3); /* Color de bloqueado */
             padding: 12px;
             border-radius: 12px;
-            cursor: pointer;
+            cursor: not-allowed;
             font-family: 'Quicksand', sans-serif;
             font-weight: 500;
             transition: all 0.3s ease;
             text-decoration: none;
             text-align: center;
             backdrop-filter: blur(5px);
+            pointer-events: none; /* Desactiva clics */
         }
 
-        .day-btn:hover {
-            background: #ff4d6d;
+        /* Clase cuando el botón se activa */
+        .day-btn.unlocked {
             color: white;
+            border: 1px solid #ff4d6d;
+            cursor: pointer;
+            pointer-events: auto;
+            background: rgba(255, 77, 109, 0.2);
+        }
+
+        .day-btn.unlocked:hover {
+            background: #ff4d6d;
             box-shadow: 0 0 15px #ff4d6d;
             transform: translateY(-3px);
         }
@@ -99,10 +105,7 @@
             align-items: center;
         }
 
-        canvas {
-            max-width: 100%;
-            max-height: 100%;
-        }
+        canvas { max-width: 100%; max-height: 100%; }
     </style>
 </head>
 <body>
@@ -111,7 +114,7 @@
         <h1>Lo que siento cuando te veo</h1>
         <div class="subtext">cada beso tuyo me enloquece</div>
         <div id="countdown-container">
-            Siguiente sorpresa en: <span id="timer">00:00:00</span>
+            Siguiente regalo en: <span id="timer">--:--:--</span>
         </div>
     </div>
 
@@ -120,42 +123,67 @@
     </div>
 
     <div class="button-container">
-        <a href="https://www.youtube.com/watch?v=e81y94Bi3jU" target="_blank" class="day-btn">Martes</a>
-        <a href="#" target="_blank" class="day-btn">Miércoles</a>
-        <a href="#" target="_blank" class="day-btn">Jueves</a>
-        <a href="#" target="_blank" class="day-btn">Viernes</a>
+        <a href="URL_MARTES" id="btn-0" class="day-btn">Martes 🔒</a>
+        <a href="URL_MIERCOLES" id="btn-1" class="day-btn">Miércoles 🔒</a>
+        <a href="URL_JUEVES" id="btn-2" class="day-btn">Jueves 🔒</a>
+        <a href="URL_VIERNES" id="btn-3" class="day-btn">Viernes 🔒</a>
     </div>
 
     <script>
-        const canvas = document.getElementById('romanceCanvas');
-        const ctx = canvas.getContext('2d');
+        // --- CONFIGURACIÓN DE FECHAS ---
+        // Mañana comienza el espectáculo a las 7:00 AM (Hora Colombia)
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 1); 
+        startDate.setHours(7, 0, 0, 0);
 
-        // --- LÓGICA DEL CONTADOR (Hora Colombia UTC-5) ---
-        function updateTimer() {
+        const btnLinks = [
+            { id: "btn-0", name: "Martes", offsetHours: 0 },
+            { id: "btn-1", name: "Miércoles", offsetHours: 24 },
+            { id: "btn-2", name: "Jueves", offsetHours: 48 },
+            { id: "btn-3", name: "Viernes", offsetHours: 72 }
+        ];
+
+        function updateLogic() {
             const now = new Date();
-            
-            // Creamos la fecha objetivo: hoy a las 7:00 AM
-            let target = new Date();
-            target.setHours(7, 0, 0, 0);
+            let nextUnlock = null;
 
-            // Si ya pasaron las 7 AM, la meta es mañana a las 7 AM
-            if (now > target) {
-                target.setDate(target.getDate() + 1);
+            btnLinks.forEach((btnInfo, index) => {
+                const unlockTime = new Date(startDate.getTime() + btnInfo.offsetHours * 60 * 60 * 1000);
+                const element = document.getElementById(btnInfo.id);
+
+                if (now >= unlockTime) {
+                    element.classList.add('unlocked');
+                    element.innerHTML = btnInfo.name + " ❤️";
+                    element.target = "_blank";
+                } else {
+                    element.classList.remove('unlocked');
+                    element.innerHTML = btnInfo.name + " 🔒";
+                    // Buscamos el próximo tiempo de desbloqueo para el contador
+                    if (!nextUnlock) nextUnlock = unlockTime;
+                }
+            });
+
+            // Si ya se desbloquearon todos
+            if (!nextUnlock) {
+                document.getElementById('countdown-container').innerText = "¡Todos los regalos desbloqueados!";
+                return;
             }
 
-            const diff = target - now;
-
+            // Actualizar contador para el próximo desbloqueo
+            const diff = nextUnlock - now;
             const h = Math.floor(diff / (1000 * 60 * 60));
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const s = Math.floor((diff % (1000 * 60)) / 1000);
-
             document.getElementById('timer').innerText = 
                 `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
-        setInterval(updateTimer, 1000);
-        updateTimer();
 
-        // --- LÓGICA DE LAS MARIPOSAS (Tu código original mantenido) ---
+        setInterval(updateLogic, 1000);
+        updateLogic();
+
+        // --- CÓDIGO DE MARIPOSAS (Igual al anterior) ---
+        const canvas = document.getElementById('romanceCanvas');
+        const ctx = canvas.getContext('2d');
         let butterflies = [];
         const butterflyCount = 130;
         const manPathData = "M250,100 c-20,0 -35,15 -35,35 c0,20 15,35 35,35 s35,-15 35,-35 C285,115 270,100 250,100 z M250,175 c-15,0 -20,10 -30,20 c-30,5 -70,15 -90,40 c-10,15 -15,40 -10,80 c5,50 15,150 20,250 h110 h110 c5,-100 15,-200 20,-250 c5,-40 0,-65 -10,-80 c-20,-25 -60,-35 -90,-40 C270,185 265,175 250,175 z";
@@ -163,8 +191,7 @@
         const stomachCenter = { x: 250, y: 380 };
 
         function resize() {
-            canvas.width = 500;
-            canvas.height = 700;
+            canvas.width = 500; canvas.height = 700;
             const scale = Math.min(window.innerWidth / 500, window.innerHeight / 900) * 0.8;
             canvas.style.width = (500 * scale) + "px";
             canvas.style.height = (700 * scale) + "px";
@@ -184,38 +211,24 @@
                 this.flapSpeed = 0.15 + Math.random() * 0.2;
             }
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.flap += this.flapSpeed;
-                if (!ctx.isPointInPath(manPath, this.x, this.y)) {
-                    this.vx *= -1; this.vy *= -1;
-                }
-                const dx = stomachCenter.x - this.x;
-                const dy = stomachCenter.y - this.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist > 120) {
-                    this.vx += dx * 0.001;
-                    this.vy += dy * 0.001;
-                }
-                this.vx += (Math.random() - 0.5) * 0.15;
-                this.vy += (Math.random() - 0.5) * 0.15;
+                this.x += this.vx; this.y += this.vy; this.flap += this.flapSpeed;
+                if (!ctx.isPointInPath(manPath, this.x, this.y)) { this.vx *= -1; this.vy *= -1; }
+                const dx = stomachCenter.x - this.x; const dy = stomachCenter.y - this.y;
+                if (Math.sqrt(dx*dx + dy*dy) > 120) { this.vx += dx * 0.001; this.vy += dy * 0.001; }
+                this.vx += (Math.random() - 0.5) * 0.15; this.vy += (Math.random() - 0.5) * 0.15;
             }
             draw() {
                 const wingW = Math.abs(Math.sin(this.flap)) * this.size;
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI/2);
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 12; ctx.shadowColor = this.color;
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.quadraticCurveTo(-wingW*2, -this.size, -wingW, this.size);
-                ctx.moveTo(0, 0);
-                ctx.quadraticCurveTo(wingW*2, -this.size, wingW, this.size);
+                ctx.moveTo(0, 0); ctx.quadraticCurveTo(-wingW*2, -this.size, -wingW, this.size);
+                ctx.moveTo(0, 0); ctx.quadraticCurveTo(wingW*2, -this.size, wingW, this.size);
                 ctx.fill();
-                ctx.fillStyle = "white";
-                ctx.fillRect(-0.5, -this.size/2, 1, this.size);
+                ctx.fillStyle = "white"; ctx.fillRect(-0.5, -this.size/2, 1, this.size);
                 ctx.restore();
             }
         }
@@ -229,23 +242,16 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
             const grad = ctx.createLinearGradient(0, 100, 0, 600);
-            grad.addColorStop(0, '#0a0a0a');
-            grad.addColorStop(0.5, '#151515');
-            grad.addColorStop(1, '#050505');
-            ctx.fillStyle = grad;
-            ctx.fill(manPath);
-            ctx.strokeStyle = 'rgba(255, 77, 109, 0.3)';
-            ctx.stroke(manPath);
+            grad.addColorStop(0, '#0a0a0a'); grad.addColorStop(0.5, '#151515'); grad.addColorStop(1, '#050505');
+            ctx.fillStyle = grad; ctx.fill(manPath);
+            ctx.strokeStyle = 'rgba(255, 77, 109, 0.3)'; ctx.stroke(manPath);
             ctx.restore();
-
             butterflies.forEach(b => { b.update(); b.draw(); });
             requestAnimationFrame(drawScene);
         }
 
         window.addEventListener('resize', resize);
-        resize();
-        setupButterflies();
-        drawScene();
+        resize(); setupButterflies(); drawScene();
     </script>
 </body>
 </html>
