@@ -133,14 +133,14 @@
         // --- CONFIGURACIÓN DE FECHAS ---
         // Mañana comienza el espectáculo a las 7:00 AM (Hora Colombia)
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() + 1); 
+        startDate.setDate(startDate.getDate() + 0); 
         startDate.setHours(7, 0, 0, 0);
 
         const btnLinks = [
             { id: "btn-0", name: "Martes", offsetHours: 0 },
-            { id: "btn-1", name: "Miércoles", offsetHours: 24 },
-            { id: "btn-2", name: "Jueves", offsetHours: 48 },
-            { id: "btn-3", name: "Viernes", offsetHours: 72 }
+            { id: "btn-1", name: "Miércoles", offsetHours: 0 },
+            { id: "btn-2", name: "Jueves", offsetHours: 0 },
+            { id: "btn-3", name: "Viernes", offsetHours: 0 }
         ];
 
         function updateLogic() {
